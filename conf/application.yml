@@ -1,0 +1,24 @@
+app:
+  port: 9090
+
+
+datasource:
+  mysql: 
+    url: (localhost:3306)/ky_used_car?charset=utf8&parseTime=True&loc=UTC
+    username: root
+    password: 123456
+
+
+logger:
+  consoleOnly: true
+  # 日志级别：debug/info/warn/error/dpanic/panic/fatal 参看zapcore level.go文件
+  level: debug
+  #Filename: 日志文件的位置
+  Filename: ./log/application.log
+  # MaxSize 在进行切割之前，日志文件的最大大小（以MB为单位）
+  MaxSize: 10
+  # MaxAges：保留旧文件的最大天数
+  MaxAge: 5
+  # MaxBackups：保留旧文件的最大个数
+  MaxBackups:
+  # Compress：是否压缩/归档旧文件
