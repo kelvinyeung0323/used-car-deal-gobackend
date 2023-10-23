@@ -1,0 +1,57 @@
+{{ define "res_fields"}}res_id,auth_code,res_name,res_type,url,parent_id,component,icon,sort,enabled,visible,created_at,updated_at{{ end }}
+
+{{/* 根据ID获取资源 */}}
+{{ define "findById"}}
+    select {{ template "res_fields"}} from sys_res where res_id = {{val .}}
+{{end}}
+
+
+
+{{/* 创建资源 */}}
+{{ define "create"}}
+    insert into sys_res({{ template "res_fields" }}) values ({{val .ResId}},{{val .AuthCode}},{{val .ResName}},{{val .ResType}},{{val .Url}},{{val .ParentId}},{{val .Component}},{{val .Icon}},{{val .Sort}},{{val .Enabled}},{{val .Visible}},{{val .CreatedAt}},{{val .UpdatedAt}})
+{{end}}
+
+{{/* 删除资源 */}}
+{{ define "delete"}}
+    delete from sys_res where res_id = {{val .}}
+{{end}}
+
+{{/* 更新资源 */}}
+{{ define "update"}}
+    update sys_res
+    set auth_code={{val .AuthCode}}, res_name = {{val .ResName}},res_type = {{val .ResType}},url = {{val .Url}},parent_id = {{val .ParentId}}, component={{val .Component}},icon = {{val .Icon}},sort = {{val .Sort}},enabled={{val .Enabled}},visible={{val .Visible}},updated_at = {{val .UpdatedAt}}
+    where res_id  = {{val .ResId}}
+{{end}}
+
+
+{{/* 查询资源 */}}
+{{ define "query"}}
+    select {{template "res_fields"}} from sys_res
+    where 1 = 1
+    {{if .ParentId}}and parent_id={{val .ParentId}}{{end}}
+    {{if .ResType}} and res_type = {{val .ResType}} {{end}}
+    {{if .ResName}} and res_name like '%{{rawVal .ResName}}%' {{end}}
+    {{if .AuthCode}} and res_code like '%{{rawVal .AuthCode}}%' {{end}}
+    {{if .Sorts}}{{ .SortOrderStmt}}{{end}}
+{{end}}
+
+{{define "checkParentIdIsChild"}}
+    with recursive cte(p) as (
+    select res_id from sys_res where res_id = {{val .ResId}}
+    union all
+    select res_id from sys_res,cte where parent_id = cte.p
+    )
+    select *
+    from cte
+    where p = {{val .ParentId}}
+{{end}}
+
+
+
+{{define "filterExistResIds"}}
+    select res_id from sys_res where res_id in ({{join .}})
+{{end}}
+{{define "deleteRoleResByResId"}}
+    delete from sys_role_res where res_id = {{val .}}
+{{end}}

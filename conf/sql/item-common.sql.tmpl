@@ -1,0 +1,60 @@
+{{define "brand_fields"}}brand_id,brand_logo,brand_name,country,remark,created_at,created_by,updated_at,updated_by{{end}}
+
+
+{{/*品牌*/}}
+{{define "queryBrands"}}
+    select {{template "brand_fields"}} from k_brand where deleted = false
+    {{if .BrandName}} and brand_name like '%{{rawVal .BrandName}}%' {{end}}
+    {{if .Countries}} and country in ({{join .Countries}}){{end}}
+{{end}}
+
+{{define "findBrand"}}
+    select {{template "brand_fields"}} from k_brand where brand_id = {{val .}}
+{{end}}
+
+{{define "createBrand"}}
+    insert into k_brand (brand_logo,brand_name,country,remark,created_at,created_by,updated_at,updated_by) values ({{val .BrandLogo}},{{val .BrandName}},{{val .Country}},{{val .Remark}},{{val .CreatedAt}},{{val .CreatedBy}},{{val .UpdatedAt}},{{val .UpdatedBy}})
+
+{{end}}
+
+
+{{define "updateBrand"}}
+    update k_brand set brand_logo={{val .BrandLogo}}, brand_name = {{val .BrandName}},country={{val .Country}},remark={{val .Remark}}, updated_at = {{val .UpdatedAt}},updated_by={{val .UpdatedBy}} where brand_id = {{val .BrandId}}
+{{end}}
+{{define  "deleteBrand"}}
+    update k_brand set deleted = true where brand_id = {{val .}}
+{{end}}
+
+
+
+{{/*车系*/}}
+{{define "series_fields"}}series_id,image,series_name,brand_id,grade,remark,created_at,created_by,updated_at,updated_by{{end}}
+
+{{define "querySeries"}}
+    select {{template "series_fields"}} from k_series where deleted = false
+    {{if .SeriesName}} and series_name like '%{{rawVal .SeriesName}}%' {{end}}
+    {{if .Brands}} and brand_id in ({{join .Brands}}){{end}}
+    {{if .Grades}} and grade in ({{join .Grades}}){{end}}
+    {{if .CreatedAtRange}} and createdAt >= {{val .CreatedAtRange.startAt}} and createdAt <= {{val .CreatedAtRange.endAt}} {{end}}
+{{end}}
+
+{{define "findSeries"}}
+    select {{template "series_fields"}} from k_series where series_id = {{val .}}
+{{end}}
+
+{{define "createSeries"}}
+    insert into k_series (image,series_name,brand_id,grade,remark,created_at,created_by,updated_at,updated_by) values ({{val .Image}},{{val .SeriesName}},{{val .BrandId}},{{val .Grade}},{{val .Remark}},{{val .CreatedAt}},{{val .CreatedBy}},{{val .UpdatedAt}},{{val .UpdatedBy}})
+{{end}}
+
+
+{{define "updateSeries"}}
+    update k_series set image={{val .Image}}, series_name = {{val .SeriesName}},brand_id = {{val .BrandId}},grade={{val .Grade}},remark={{val .Remark}},updated_at = {{val .UpdatedAt}},updated_by = {{val .UpdatedBy}} where series_id = {{val .SeriesId}}
+{{end}}
+
+{{define "deleteSeries"}}
+    update k_series set deleted= true where series_id = {{val .}}
+{{end}}
+
+{{define "getSeriesOfBrand"}}
+select {{template "series_fields"}} from k_series where brand_id = {{val .}}
+{{end}}

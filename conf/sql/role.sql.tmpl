@@ -1,0 +1,70 @@
+{{ define "role_fields"}}role_id,role_name,auth_code,enabled,remark,created_at,updated_at{{ end }}
+
+{{/* 根据ID获取角色 */}}
+{{ define "findById"}}
+    select {{ template "role_fields"}} from sys_role where role_id = {{val .}}
+{{end}}
+
+{{/* 根据权限标识获取角色 */}}
+{{ define "findByAuthCode"}}
+    select {{ template "role_fields"}} from sys_role where auth_code = {{val .}}
+{{end}}
+
+{{/* 创建角色 */}}
+{{ define "create"}}
+    insert into sys_role({{ template "role_fields" }}) values ({{val .RoleId}},{{val .RoleName}},{{val .AuthCode}},{{val .Enabled}},{{val .Remark}},{{val .CreatedAt}},{{val .UpdatedAt}})
+{{end}}
+
+{{/* 删除角色 不删除admin */}}
+{{ define "delete"}}
+    delete from sys_role where role_id = {{val .}} and auth_code <> 'admin'
+{{end}}
+
+{{/* 更新角色 */}}
+{{ define "update"}}
+    update sys_role
+    set role_name={{val .RoleName}}, auth_code = {{val .AuthCode}},enabled = {{val .Enabled}},remark = {{val .Remark}}, updated_at={{val .UpdatedAt}}
+    where role_id  = {{val .RoleId}}
+{{end}}
+
+
+{{/* 查询角色 */}}
+{{ define "query"}}
+    select {{template "role_fields"}} from sys_role
+    where 1 = 1
+    {{if .Enabled}} and enabled = {{val .Enabled}} {{end}}
+    {{if .RoleName}} and role_name like '%{{rawVal .RoleName}}%' {{end}}
+    {{if .AuthCode}} and auth_code like '%{{rawVal .AuthCode}}%' {{end}}
+    {{if .StartAt}} and created_at >= {{val .StartAt}}  {{end}}
+    {{if .EndAt}} and created_at <= {{val .EndAt}} {{end}}
+{{end}}
+{{ define "queryCount"}}
+    select count(*)
+    where 1 = 1
+    {{if .Enabled}} and enabled = {{val .Enabled}} {{end}}
+    {{if .RoleName}} and role_name like '%{{rawVal .RoleName}}%' {{end}}
+    {{if .AuthCode}} and auth_code like '%{{rawVal .AuthCode}}%' {{end}}
+    {{if .StartAt}} and created_at >= {{val .StartAt}}  {{end}}
+    {{if .EndAt}} and created_at <= {{val .EndAt}} {{end}}
+{{end}}
+
+
+
+{{define "checkAuthCodeExists" }}
+    select {{template "role_fields"}} from sys_role where auth_code ={{val .AuthCode}} {{if .RoleId}} and role_id <> {{val .RoleId}}{{end}}
+{{end}}
+
+
+
+
+{{define "filterExistRoleIds"}}
+    select role_id from sys_role where role_id in ({{join .}})
+{{end}}
+
+
+
+{{define "enableRole"}}
+    update sys_role set enabled = {{val .Enabled}} where role_id = {{val .RoleId}}
+{{end}}
+
+

@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const statusOk = 200
+
 // RestResult Code 为1即为操作成功，其他的为具体错误代码
 type RestResult struct {
 	Data     any    `json:"data,omitempty"`
@@ -31,19 +33,9 @@ func ReturnFail(c *gin.Context, r *webError) {
 	})
 }
 
-func OK(c *gin.Context, data any) {
-	c.JSON(http.StatusOK, &RestResult{
-		Code:     1,
-		Data:     data,
-		Msg:      nil,
-		PageSize: nil,
-		PageNum:  nil,
-		Total:    nil,
-	})
-}
 func ReturnOK(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, &RestResult{
-		Code:     1,
+		Code:     statusOk,
 		Data:     data,
 		Msg:      nil,
 		PageSize: nil,
@@ -54,7 +46,7 @@ func ReturnOK(c *gin.Context, data any) {
 }
 func ReturnOKWithMsg(c *gin.Context, data any, msg any) {
 	c.JSON(http.StatusOK, &RestResult{
-		Code:     1,
+		Code:     statusOk,
 		Data:     data,
 		Msg:      msg,
 		PageSize: nil,
@@ -67,7 +59,7 @@ func ReturnOKWithMsg(c *gin.Context, data any, msg any) {
 func ReturnPage(c *gin.Context, msg any, data any, pageSize int64, pageNum int64, total int64) {
 
 	c.JSON(http.StatusOK, &RestResult{
-		Code:     1,
+		Code:     statusOk,
 		Data:     data,
 		Msg:      nil,
 		PageSize: &pageSize,
@@ -76,10 +68,21 @@ func ReturnPage(c *gin.Context, msg any, data any, pageSize int64, pageNum int64
 	})
 }
 
+func ReturnWithPage[T any](c *gin.Context, msg any, page *Page[T]) {
+
+	c.JSON(http.StatusOK, &RestResult{
+		Data:     page.Data,
+		Code:     statusOk,
+		PageSize: &page.PageSize,
+		PageNum:  &page.PageNum,
+		Total:    &page.Total,
+	})
+}
+
 func ReturnPageWithMsg(c *gin.Context, data any, pageSize int64, pageNum int64, total int64, msg string) {
 
 	c.JSON(http.StatusOK, &RestResult{
-		Code:     1,
+		Code:     statusOk,
 		Data:     data,
 		Msg:      msg,
 		PageSize: &pageSize,

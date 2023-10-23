@@ -1,0 +1,106 @@
+{{define "spec_fields"}}spec_id,year,brand_id,series_id,model,params,created_at,updated_at{{end}}
+
+{{define "createSpec"}}
+    insert into k_item_spec ({{template "spec_fields"}}) values ({{val .SpecId}},{{val .Year}},{{val .BrandId}},{{val .SeriesId}},{{val .Model}},{{json .Params}},{{val .CreatedAt}},{{val .UpdatedAt}})
+{{end}}
+
+
+
+{{define "updateSpec"}}
+    update k_item_spec
+    set year ={{val .Year}},
+    brand_id ={{val .BrandId}},
+    series_id ={{val .SeriesId}},
+    model ={{val .Model}},
+    params ={{json .Params}},
+    updated_at ={{val .UpdatedAt}}
+    where   spec_id ={{val .SpecId}}
+{{end}}
+
+{{define "querySpecs"}}
+    select t1.spec_id,t1.year,t1.brand_id,ifnull(t2.brand_name,'') as brand_name,t1.series_id,ifnull(t3.series_name,'') as series_name,t1.model,t1.params,t1.created_at,t1.updated_at
+    from k_item_spec t1
+    left join k_brand t2
+    on t2.brand_id = t1.brand_id
+    left join k_series t3
+    on t3.series_id = t1.series_id
+    where t1.deleted = false
+    {{if .Year}} and t1.year = {{val .Year}}{{end}}
+    {{if .BrandIds}}and t1.brand_id in ({{join .BrandIds}}){{end}}
+    {{if .SeriesIds}} and t1.series_id  in ({{join .SeriesIds}}) {{end}}
+    {{if .Model}} and t1.model like  '%{{rawVal .Model}}%' {{end}}
+    {{if .CreatedAtRange}}
+        and t1.created_at >= {{val .CreatedAtRange.StartAt}}
+        and t1.created_at <= {{val .CreatedAtRange.EndAt}}
+    {{end}}
+
+{{end}}
+
+{{define "findSpecById"}}
+    select t1.spec_id,t1.year,t1.brand_id,ifnull(t2.brand_name,'') as brand_name,t1.series_id,ifnull(t3.series_name,'') as series_name,t1.model,t1.params,t1.created_at,t1.updated_at
+    from k_item_spec t1
+    left join k_brand t2
+    on t2.brand_id = t1.brand_id
+    left join k_series t3
+    on t3.series_id = t1.series_id
+    where t1.deleted = false and t1.spec_id = {{val .}}
+{{end}}
+
+{{define "deleteSpec"}}
+    update k_item_spec set deleted = true where spec_id = {{val .}}
+{{end}}
+
+
+
+{{define "spec_media_fields"}}media_id,spec_id,sort,thumbnail,media_type,location,color_id,catalog,created_at,created_by{{end}}
+
+{{define "createSpecMedia"}}
+    insert into k_item_spec_media({{template "spec_media_fields"}}) values ({{val .MediaId}},{{val .SpecId}},{{val .Sort}},{{val .Thumbnail}},{{val .MediaType}},{{val .Location}},{{val .ColorId}},{{val .Catalog}},{{val .CreatedAt}},{{val .CreatedBy}})
+{{end}}
+{{define "getMediaOfSpec"}}
+    select {{template "spec_media_fields"}} from k_item_spec_media where spec_id = {{val .}} and  deleted = false
+{{end}}
+{{define "getMediaOfColor"}}
+    select {{template "spec_media_fields"}} from k_item_spec_media where color_id = {{val .}} and  deleted = false
+{{end}}
+{{define "deleteMediaOfSpec"}}
+    update k_item_spec_media set deleted = true where spec_id = {{val .}}
+{{end}}
+
+{{define "deleteSpecMedia"}}
+    update k_item_spec_media set deleted = true where media_id = {{val .}}
+{{end}}
+{{define "findSpecMediaById"}} select {{template "spec_media_fields"}} from k_item_spec_media where media_id = {{val .}} and  deleted = false {{end}}
+
+
+
+
+
+{{define "spec_color_fields"}}color_id,spec_id,value,name,created_at,created_by{{end}}
+
+{{define "createSpecColor"}}
+    insert into k_item_spec_color({{template "spec_color_fields"}}) values ({{val .ColorId}},{{val .SpecId}},{{val .Value}},{{val .Name}},{{val .CreatedAt}},{{val .CreatedBy}})
+{{end}}
+{{define "updateSpecColor"}}
+    update k_item_spec_color
+    set value = {{val .Value}},name = {{val .Name}}
+    where color_id = {{val .ColorId}}
+{{end}}
+{{define "getColorOfSpec"}}
+    select {{template "spec_color_fields"}} from k_item_spec_color where spec_id = {{val .}} and  deleted = false
+{{end}}
+{{define "deleteColorOfSpec"}}
+    update k_item_spec_color set deleted = true where spec_id = {{val .}}
+{{end}}
+
+{{define "deleteSpecColor"}}
+    update k_item_spec_color set deleted = true where color_id = {{val .}}
+{{end}}
+{{define "findSpecColorById"}} select {{template "spec_color_fields"}} from k_item_spec_color where color_id = {{val .}} and  deleted = false {{end}}
+
+
+
+
+
+
+

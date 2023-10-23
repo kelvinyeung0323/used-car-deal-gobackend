@@ -3,6 +3,9 @@ package types
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -13,7 +16,36 @@ type NullMarshalInterface interface {
 	MarshalJSON() ([]byte, error)
 }
 
-//因为json 对time.Time解释有bug,这里自定义Time类型序列化和反序列化处理
+type TimeRange struct {
+	StartAt *Time `form:"startAt" json:"startAt"`
+	EndAt   *Time `form:"endAt" json:"endAt"`
+}
+
+func (v TimeRange) MarshalJSON() ([]byte, error) {
+	s := "\"" + time.Time(*v.StartAt).Format(TimeFormat) + "\""
+	e := "\"" + time.Time(*v.StartAt).Format(TimeFormat) + "\""
+	formatted := s + ":" + e
+	return []byte(formatted), nil
+
+}
+
+func (v *TimeRange) UnmarshalJSON(data []byte) error {
+	arr := strings.Split(string(data), ",")
+	if len(arr) < 2 {
+		return fmt.Errorf("expect a slice with 2 element,but got %v", len(arr))
+	}
+	err := v.StartAt.UnmarshalJSON([]byte(arr[0]))
+	if err != nil {
+		return err
+	}
+	err = v.EndAt.UnmarshalJSON([]byte(arr[1]))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 因为json 对time.Time解释有bug,这里自定义Time类型序列化和反序列化处理
 type Time time.Time
 
 func (v Time) MarshalJSON() ([]byte, error) {
@@ -22,13 +54,26 @@ func (v Time) MarshalJSON() ([]byte, error) {
 
 }
 
+var unixTimeStampePattern = regexp.MustCompile("^[0-9]{13}$")
+
 func (v *Time) UnmarshalJSON(data []byte) error {
-	// TODO:提出来参数配置
-	loc, _ := time.LoadLocation("Asia/Shanghai")
-	t, err := time.ParseInLocation(TimeFormat, strings.ReplaceAll(string(data), "\"", ""), loc)
-	if err != nil {
-		return err
+	//1695733583563
+	var t time.Time
+	if unixTimeStampePattern.Match(data) {
+		timestamp, err := strconv.ParseInt(string(data), 10, 64)
+		if err != nil {
+			return err
+		}
+		t = time.Unix(timestamp/1000, 0)
+	} else {
+		loc, _ := time.LoadLocation("Asia/Shanghai")
+		var err error
+		t, err = time.ParseInLocation(TimeFormat, strings.ReplaceAll(string(data), "\"", ""), loc)
+		if err != nil {
+			return err
+		}
 	}
+
 	b := Time(t)
 	*v = b
 	return nil

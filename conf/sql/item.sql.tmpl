@@ -1,0 +1,83 @@
+{{define "item_fields"}}item_id,title,sub_title,vehicle_model,usage_nature,emission_std,displacement,gearbox,body_color,belonging_place,mileage,registration_date,annual_check_date,insurance_expired_date,usage_tax_valid_date,on_sale,auto_on_sale,start_date,end_date,remark,created_at,created_by,updated_at,updated_by,deleted{{end}}
+
+{{define "createItem"}}
+    insert into k_item ({{template "item_fields"}}) values ({{val .ItemId}},{{val .Title}},{{val .SubTitle}},{{val .VehicleModel}},{{val .UsageNature}},{{val .EmissionStd}},{{val .Displacement}},{{val .Gearbox}},{{val .BodyColor}},{{val .BelongingPlace}},{{val .Mileage}},{{val .RegistrationDate}},{{val .AnnualCheckDate}},{{val .InsuranceExpiredDate}},{{val .UsageTaxValidDate}},{{val .OnSale}},{{val .AutoOnSale}},{{val .StartDate}},{{val .EndDate}},{{val .Remark}},{{val .CreatedAt}},{{val .CreatedBy}},{{val .UpdatedAt}},{{val .UpdatedBy}},{{val .Deleted}})
+{{end}}
+
+
+
+{{define "updateItem"}}
+    update k_item
+    set title ={{val .Title}},
+    sub_title ={{val .SubTitle}},
+    vehicle_model= {{val .VehicleModel}},
+    usage_nature ={{val .UsageNature}},
+    emission_std ={{val .EmissionStd}},
+    displacement ={{val .Displacement}},
+    gearbox ={{val .Gearbox}},
+    body_color ={{val .BodyColor}},
+    belonging_place ={{val .BelongingPlace}},
+    mileage ={{val .Mileage}},
+    registration_date ={{val .RegistrationDate}},
+    annual_check_date ={{val .AnnualCheckDate}},
+    insurance_expired_date ={{val .InsuranceExpiredDate}},
+    usage_tax_valid_date ={{val .UsageTaxValidDate}},
+    on_sale ={{val .OnSale}},
+    auto_on_sale ={{val .AutoOnSale}},
+    start_date ={{val .StartDate}},
+    end_date ={{val .EndDate}},
+    remark ={{val .Remark}},
+    deleted ={{val .Deleted}},
+    updated_at ={{val .UpdatedAt}},
+    updated_by ={{val .UpdatedBy}}
+    where   item_id ={{val .ItemId}}
+{{end}}
+
+{{define "queryItems"}}
+    select {{template "item_fields"}} from k_item
+    where deleted = false
+    {{if .ItemId}} and item_id like '%{{rawVal .ItemId}}%'{{end}}
+    {{if .Title}}and title like '%{{rawVal .Title}}%'{{end}}
+    {{if .UsageNature}} and usage_nature  = {{val .UsageNature}} {{end}}
+    {{if .EmissionStd}} and emission_std = {{val .EmissionStd}} {{end}}
+    {{if .Displacement}} and displacement = {{val .Displacement}} {{end}}
+    {{if .Gearbox}} and gearbox like '%{{rawVal .Gearbox}}%' {{end}}
+    {{if .BodyColor}} and body_color = {{val .BodyColor}} {{end}}
+    {{if .CreatedTimeRange}}
+        and created_at >= {{val .CreatedTimeRange.StartAt}}
+        and created_at <= {{val .CreatedTimeRange.EndAt}}
+    {{end}}
+
+{{end}}
+
+{{define "findItemById"}}
+    select {{template "item_fields"}} from k_item where item_id = {{val .}}
+{{end}}
+
+{{define "deleteItem"}}
+    update k_item set deleted = true where item_id = {{val .}}
+{{end}}
+
+
+
+
+{{define "item_media_fields"}}media_id,item_id,sort,media_type,location,thumbnail,deleted,created_at{{end}}
+
+{{define "createItemMedia"}}
+    insert into k_item_media({{template "item_media_fields"}}) values ({{val .MediaId}},{{val .ItemId}},{{val .Sort}},{{val .MediaType}},{{val .Location}},{{val .Thumbnail}},{{val .Deleted}},{{val .CreatedAt}})
+{{end}}
+{{define "getMediaOfItem"}}
+    select {{template "item_media_fields"}} from k_item_media where item_id = {{val .}} and  deleted = false
+{{end}}
+{{define "deleteMediaOfItem"}}
+    update k_item_media set deleted = true where item_id = {{val .}}
+{{end}}
+
+{{define "deleteItemMedia"}}
+    update k_item_media set deleted = true where media_id = {{val .}}
+{{end}}
+{{define "findItemMediaById"}} select {{template "item_media_fields"}} from k_item_media where media_id = {{val .MediaId}} and  deleted = false {{end}}
+
+
+
+

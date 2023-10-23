@@ -2,7 +2,6 @@ package security
 
 import (
 	"errors"
-	"log"
 	"strings"
 	"time"
 	"used-car-deal-gobackend/base/web"
@@ -21,11 +20,11 @@ type MyClaims struct {
 	jwt.StandardClaims
 }
 
-//TokenExpireDuration JWT的过期时间，默认2小时
+// TokenExpireDuration JWT的过期时间，默认2小时
 // TODO:配置到配置文件
-const TokenExpireDuration = time.Hour * 2
+const TokenExpireDuration = time.Second * 10
 
-//定义Secret：
+// 定义Secret：
 var MySecret = []byte("Kelvin Yeung")
 
 // GenToken 生成JWT
@@ -72,8 +71,8 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			// 	"code": 2003,
 			// 	"msg":  "请求头中auth为空",
 			// })
-			log.Println("请求头中auth为空")
-			web.ReturnFail(c, web.TOKEN_ERROR)
+			log.Infof("请求头中auth为空")
+			web.ReturnFail(c, web.UNAUTHORIZED)
 			c.Abort()
 			return
 		}
@@ -84,8 +83,8 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			// 	"code": 2004,
 			// 	"msg":  "请求头中auth格式有误",
 			// })
-			log.Println("请求头中auth格式有误")
-			web.ReturnFail(c, web.TOKEN_ERROR)
+			log.Infof("请求头中auth格式有误")
+			web.ReturnFail(c, web.UNAUTHORIZED)
 			c.Abort()
 			return
 		}
@@ -96,8 +95,8 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			// 	"code": 2005,
 			// 	"msg":  "无效的Token",
 			// })
-			log.Println("无效的Token")
-			web.ReturnFail(c, web.TOKEN_ERROR)
+			log.Infof("无效的Token")
+			web.ReturnFail(c, web.UNAUTHORIZED)
 			c.Abort()
 			return
 		}

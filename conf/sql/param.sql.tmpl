@@ -1,0 +1,42 @@
+{{define "param_fields"}}param_id,param_key,param_name,created_at,created_by,updated_at,updated_by{{end}}
+
+{{define "createParam"}}insert into k_param ({{template "param_fields"}})values ({{val .ParamId}},{{val .ParamKey}},{{val .ParamName}},{{val .CreatedAt}},{{val .CreatedBy}},{{val .UpdatedAt}},{{val .UpdatedBy}}){{end}}
+
+
+
+{{define "updateParam"}}update k_param set param_key={{val .ParamKey}},param_name={{val .ParamName}},updated_at = {{val .UpdatedAt}} ,updated_by = {{val .UpdatedBy}}where param_id = {{val .ParamId}}{{end}}
+
+
+{{define "findParam"}}select {{template "param_fields"}} from k_param where param_id={{val .}}{{end}}
+
+{{define "findParamByKey"}}select {{template "param_fields"}} from k_param where param_key={{val .}}{{end}}
+
+{{define "deleteParam"}}update k_param set deleted=true where param_id={{val .}}{{end}}
+
+{{define "queryParams"}}
+    select {{template "param_fields"}} from k_param where deleted=false
+    {{if .ParamName}} and param_name like '%{{rawVal .ParamName}}%' {{end}}
+    {{if .ParamKey}} and param_key like '%{{rawVal .ParamKey}}%' {{end}}
+    {{if .CreatedAtRange}}
+        and created_at >={{val .CreatedAtRange.StartAt }} and created_at   <= {{val .CreatedAtRange.EndAt}}
+    {{end}}
+{{end}}
+
+
+{{/*条目*/}}
+
+
+{{define "item_fields"}}item_id,param_id,value_type,item_name,item_key,item_value,description,parent_id,created_at,created_by,updated_at,updated_by{{end}}
+
+{{define "createItem"}}insert into k_param_item ({{template "item_fields"}})values ({{val .ItemId}},{{val .ParamId}},{{val .ValueType}},{{val .ItemName}},{{val .ItemKey}},{{val .ItemValue}},{{val .Description}},{{val .ParentId}},{{val .CreatedAt}},{{val .CreatedBy}},{{val .UpdatedAt}},{{val .UpdatedBy}}){{end}}
+
+{{define "updateItem"}}update k_param_item set item_name={{val .ItemName}}, item_key={{val .ItemKey}},value_type={{val .ValueType}},item_value={{val .ItemValue}},description={{val .Description}},parent_id={{val .ParentId}},updated_at = {{val .UpdatedAt}} ,updated_by = {{val .UpdatedBy}} where item_id = {{val .ItemId}}{{end}}
+
+{{define "findItem"}}select {{template "item_fields"}} from k_param_item where item_id={{val .}}{{end}}
+{{define "findItemsByParamId"}}select {{template "item_fields"}} from k_param_item where param_id={{val .}} and deleted=false {{end}}
+{{define "findItemsByParentId"}}select {{template "item_fields"}} from k_param_item where parent_id={{val .}} and deleted=false{{end}}
+{{define "findItemsOfParamByParentId"}}select {{template "item_fields"}} from k_param_item where param_id={{val .ParamId}} and parent_id={{val .ParentId}} and deleted=false{{end}}
+{{define "deleteItem"}}update k_param_item set deleted=true where item_id={{val .}}{{end}}
+{{define "deleteByParamId"}}update k_param_item set deleted=true where param_id={{val .}} {{end}}
+
+

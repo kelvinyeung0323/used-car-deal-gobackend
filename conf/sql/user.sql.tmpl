@@ -1,9 +1,9 @@
 {{ define "user_fields"}}
-user_id,user_name,nick_name,password,created_at,updated_at,last_login_at
+user_id,user_name,avatar,nick_name,password, enabled,remark,created_at,updated_at,last_login_at
 {{ end }}
 
 {{/* 根据ID获取用户 */}}
-{{ define "find"}}
+{{ define "findById"}}
 select 
 {{ template "user_fields"}}
 from sys_user 
@@ -24,7 +24,7 @@ where user_name = {{val .}}
 {{ define "create"}}
 insert into sys_user({{ template "user_fields" }}) 
 values 
-({{val .UserId}},{{val .UserName}},{{val .NickName}},{{val .Password}},{{val .CreatedAt}},{{val .UpdatedAt}},{{val .LastLoginTime}})
+({{val .UserId}},{{val .UserName}},{{val .Avatar}},{{val .NickName}},{{val .Password}},{{val .Enabled}},{{val .Remark}},{{val .CreatedAt}},{{val .UpdatedAt}},{{val .LastLoginAt}})
 {{end}}
 
 {{/* 删除用户 */}}
@@ -35,7 +35,9 @@ delete from sys_user where user_id = {{val .}}
 {{/* 更新用户 */}}
 {{ define "update"}}
 update sys_user
-set nick_name = {{val .NickName}}
+set nick_name = {{val .NickName}},enabled = {{val .Enabled}},remark={{val .Remark}},updated_at={{val .UpdatedAt}}
+    {{if .Password}},password={{val .Password}}{{end}}
+    {{if .Avatar}},avatar={{val .Avatar}}{{end}}
 where user_id  = {{val .UserId}}
 {{end}}
 
@@ -52,15 +54,40 @@ where user_id  = {{val .UserId}}
 {{ define "query"}}
 select {{template "user_fields"}}
 from sys_user
-where
-1 = 1
-{{if .UserName}}
-and user_name like '%{{rawVal .UserName}}%'
-{{end}}
+where 1 = 1 {{if .UserName}} and user_name like '%{{rawVal .UserName}}%'{{end}}
+    {{if .Enabled}} and enabled = {{.Enabled}} {{end}}
+    {{if .StartAt}} and created_at >= {{val .StartAt}}{{end}}
+    {{if .EndAt}} and created_at <= {{val .EndAt}}{{end}}
 {{end}}
 
 
 {{/*更新最后登录时间*/}}
 {{ define "updateLoginTime"}}
 update sys_user set last_login_at = {{.LastLoginAt}} where user_id = {{val .UserId}}
+{{end}}
+
+
+
+
+
+{{define "enableUser"}}
+    update sys_user set enabled={{val .Enabled}} where user_id= {{val .UserId}}
+{{end}}
+
+{{define "changePwd"}}
+    update sys_user set password = {{val .Password}} where user_id = {{val .UserId}}
+{{end}}
+
+{{define "filterExistUserIds"}}
+    select user_id from sys_user where user_id in ({{join .}})
+{{end}}
+
+{{ define "findAuthCodesOfUser"}}
+    select auth_code
+    from sys_res t1
+    left join sys_role_res t2
+    on t2.res_id = t1.res_id
+    left join sys_user_role t3
+    on t3.role_id = t2.role_id
+    where t3.user_id = {{val .}}
 {{end}}

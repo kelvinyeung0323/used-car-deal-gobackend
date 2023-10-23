@@ -1,0 +1,27 @@
+
+{{define "createResOfRole"}}
+    insert into sys_role_res (role_id,res_id) values {{range $i,$item := .ResIds}}{{if ne $i 0}},{{end}}({{val $.RoleId}},{{val $item}}) {{end}}
+{{end}}
+
+
+{{define "deleteResOfRole"}}
+    delete from sys_role_res where role_id = {{val .}}
+{{end}}
+
+{{define "getResIdsOfRole"}}
+    select res_id from sys_role_res where role_id = {{val .}}
+{{end}}
+
+{{define "queryResOfUser"}}
+    select t1.res_id,t1.auth_code,t1.res_name,t1.res_type,t1.url,t1.parent_id,t1.component,t1.icon,t1.sort,t1.enabled,t1.visible,t1.created_at,t1.updated_at
+        from sys_res t1
+        left join sys_role_res t2
+        on t1.res_id = t2.res_id
+        left join sys_user_role t3
+        on t3.role_id = t2.role_id
+        where 1=1
+        {{if .UserId}} and t3.user_id = {{val .UserId}} {{end}}
+        {{if .ResType}} and t1.res_type = {{val .ResType}} {{end}}
+        {{if .ParentId}} and t1.parent_id = {{val .ParentId}} {{end}}
+        {{if .Enabled}} and t1.enabled = {{val .Enabled}}{{end}}
+{{end}}

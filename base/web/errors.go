@@ -1,10 +1,11 @@
 package web
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
+	"used-car-deal-gobackend/base/logger"
 )
+
+var log = logger.GetInstance()
 
 type webError struct {
 	Code int64
@@ -19,6 +20,7 @@ var (
 	VALID_ERROR   = &webError{300, "参数错误"}
 	ERROR         = &webError{400, "操作失败"}
 	UNAUTHORIZED  = &webError{401, "您还未登录"}
+	FORBIDDEN     = &webError{403, "访问受限"}
 	NOT_FOUND     = &webError{404, "资源不存在"}
 	INNER_ERROR   = &webError{500, "系统发生异常"}
 	BIZ_FAIL      = &webError{501, "业务错误"}
@@ -39,13 +41,13 @@ func ErrorHandleMiddleware(c *gin.Context) {
 		if r := recover(); r != nil {
 			switch t := r.(type) {
 			case *webError:
-				log.Printf("panic: %v\n", t.Msg)
 				ReturnFail(c, t)
 			default:
-				log.Printf("panic: %v\n", t)
 				ReturnFail(c, INNER_ERROR)
 			}
-			c.Abort()
+			//重新抛出异常，让logger recover 捕捉
+			//c.Abort()
+			panic(r)
 		}
 	}()
 	c.Next()

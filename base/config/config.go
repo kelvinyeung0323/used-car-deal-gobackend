@@ -7,22 +7,29 @@ import (
 )
 
 var MySQLConfig = struct {
-	Url      string `yaml:"url"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Url      string `mapstructure:"url"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }{}
 
 var AppConfig = struct {
-	Port string `yaml:"port"`
+	Port string `mapstructure:"port"`
 }{}
 
 var LogConfig = struct {
-	ConsoleOnly bool   `json:"consoleOnly"`
-	Level       string `json:"level"`
-	Filename    string `json:"filename"`
-	MaxSize     int    `json:"maxsize"`
-	MaxAge      int    `json:"max_age"`
-	MaxBackups  int    `json:"max_backups"`
+	ConsoleOnly bool   `mapstructure:"console-only"`
+	Level       string `mapstructure:"level"`
+	Filename    string `mapstructure:"filename"`
+	MaxSize     int    `mapstructure:"max-size"`
+	MaxAge      int    `mapstructure:"max-age"`
+	MaxBackups  int    `mapstructure:"max-backups"`
+}{}
+
+var FileUploadConfig = struct {
+	MaxSize      int    `mapstructure:"max-size"`
+	FileStorage  string `mapstructure:"file-storage"`
+	Host         string `mapstructure:"host"`
+	StaticFsPath string `mapstructure:"static-fs-path"`
 }{}
 
 func InitConfig() {
@@ -66,4 +73,11 @@ func loadAppConfig() {
 		log.Printf("error:解释配置文件失败,%v", err)
 	}
 
+	fileUpload := viper.Sub("file-upload")
+
+	if err := fileUpload.Unmarshal(&FileUploadConfig); err != nil {
+		log.Printf("error:解释配置文件失败,%v", err)
+	}
+
+	log.Printf("配置文件加载完毕！")
 }

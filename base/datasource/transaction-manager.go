@@ -32,20 +32,20 @@ func NewTransactionManger(db DBCommon) *TransactionManger {
 }
 
 // TransactionHolder 事务holder
-//cnt 为嵌套计数，用于处理嵌套事务，这里没有考虑事务隔离级别和事务传播机制
+// cnt 为嵌套计数，用于处理嵌套事务，这里没有考虑事务隔离级别和事务传播机制
 type TransactionHolder struct {
 	DB  DBCommon
 	Tx  *sqlx.Tx
 	Cnt int
 }
 
-func (t *TransactionManger) BeginTx(ctx *gin.Context) error {
+func (t *TransactionManger) BeginTx(ctx *gin.Context) {
+
 	if ctx == nil {
 		log.Debug("没有ctx,不开启事务")
-		return nil
+		return
 	}
 	//从Context中获取transaction holder,如果没有则新增一个
-
 	txHolder, exists := ctx.Get(transactionContextKey)
 	if !exists {
 		t.mutex.Lock()
@@ -62,42 +62,42 @@ func (t *TransactionManger) BeginTx(ctx *gin.Context) error {
 
 	th, ok := txHolder.(*TransactionHolder)
 	if !ok {
-		return fmt.Errorf("error:获取事务管理错误:%v", txHolder)
+		panic(fmt.Errorf("error:获取事务管理错误:%v", txHolder))
 	}
-
+	th.Cnt++
 	if th.Tx == nil {
 		var err error
 		th.Tx, err = t.db.BeginTxx(ctx, nil)
 		if err != nil {
 			panic(fmt.Sprintf("error: 开启事务错误:%v\n", err))
 		}
-		th.Cnt++
+
 	}
-	return nil
+	return
 }
 
-func (*TransactionManger) CommitTx(ctx *gin.Context) error {
+func (*TransactionManger) CommitTx(ctx *gin.Context) {
 	if ctx == nil {
 		log.Debug("没有ctx,不提交事务")
-		return nil
+		return
 	}
 	txHolder, exists := ctx.Get(transactionContextKey)
 	if !exists {
 		log.Debug("error: 没有开启的事务.")
 	}
 	th, ok := txHolder.(*TransactionHolder)
+	log.Debug("CommitTx cnt is::::::::::", th.Cnt)
 	if !ok {
-		return fmt.Errorf("error:获取事务管理错误:%v\n", txHolder)
+		panic(fmt.Errorf("error:获取事务管理错误:%v\n", txHolder))
 	}
 	th.Cnt--
 	if th.Cnt != 0 {
-		return nil
+		return
 	}
 	err := th.Tx.Commit()
 	if err != nil {
-		return fmt.Errorf("error: 提交事务错误:%v\n", err)
+		panic(fmt.Errorf("error: 提交事务错误:%v\n", err))
 	}
-	return nil
 }
 
 func (t *TransactionManger) GetConn(ctx *gin.Context) (SQLCommon, error) {
@@ -120,7 +120,7 @@ func (t *TransactionManger) GetConn(ctx *gin.Context) (SQLCommon, error) {
 	return t.db, nil
 }
 
-//TransactionMiddleware 事务处理中间件
+// TransactionMiddleware 事务处理中间件
 func TransactionMiddleware(ctx *gin.Context) {
 
 	defer func() {

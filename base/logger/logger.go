@@ -6,9 +6,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"net"
-	"net/http"
 	"net/http/httputil"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -16,7 +16,7 @@ import (
 	"used-car-deal-gobackend/base/config"
 )
 
-//Logger 封装zap 让项目中使用logger与zap松耦合
+// Logger 封装zap 让项目中使用logger与zap松耦合
 type Logger interface {
 	// Debug uses fmt.Sprint to construct and log a message.
 	Debug(args ...interface{})
@@ -99,19 +99,23 @@ func GetInstance() Logger {
 
 // InitLogger 初始化Logger
 func InitLogger() (err error) {
-	var writeSyncer zapcore.WriteSyncer
-	if config.LogConfig.ConsoleOnly {
-		writeSyncer = zapcore.Lock(os.Stdout)
-	} else {
-		writeSyncer = getLogWriter(config.LogConfig.Filename, config.LogConfig.MaxSize, config.LogConfig.MaxBackups, config.LogConfig.MaxAge)
-	}
-	encoder := getEncoder()
-	var l = new(zapcore.Level)
-	err = l.UnmarshalText([]byte(config.LogConfig.Level))
+	var lvl = new(zapcore.Level)
+	err = lvl.UnmarshalText([]byte(config.LogConfig.Level))
 	if err != nil {
 		return
 	}
-	core := zapcore.NewCore(encoder, writeSyncer, l)
+
+	var allCore []zapcore.Core
+
+	if config.LogConfig.ConsoleOnly {
+		consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+		allCore = append(allCore, zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), lvl))
+	} else {
+		writeSyncer := getLogWriter()
+		encoder := getEncoder()
+		allCore = append(allCore, zapcore.NewCore(encoder, writeSyncer, lvl))
+	}
+	core := zapcore.NewTee(allCore...)
 	logger.Logger = zap.New(core, zap.AddCaller())
 	sugaredLogger.SugaredLogger = logger.Sugar()
 	zap.ReplaceGlobals(logger.Logger) // 替换zap包中全局的logger实例，后续在其他包中只需使用zap.L()调用即可
@@ -131,13 +135,14 @@ func getEncoder() zapcore.Encoder {
 	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
-func getLogWriter(filename string, maxSize, maxBackup, maxAge int) zapcore.WriteSyncer {
+func getLogWriter() zapcore.WriteSyncer {
 
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   filename,
-		MaxSize:    maxSize,
-		MaxBackups: maxBackup,
-		MaxAge:     maxAge,
+		Filename:   config.LogConfig.Filename,   //日志文件位置
+		MaxSize:    config.LogConfig.MaxSize,    //进行切割之前，日志文件最大值（单位：MB),默认100MB
+		MaxBackups: config.LogConfig.MaxBackups, //保留旧文件的最大个数
+		MaxAge:     config.LogConfig.MaxAge,     //保留旧文伯最大天数
+		Compress:   false,                       //是否压缩/归档旧文件
 	}
 	return zapcore.AddSync(lumberJackLogger)
 }
@@ -168,7 +173,8 @@ func GinLogger() gin.HandlerFunc {
 func GinRecovery(stack bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
-			if err := recover(); err != nil {
+			err := recover()
+			if err != nil {
 				// Check for a broken connection, as it is not really a
 				// condition that warrants a panic stack trace.
 				var brokenPipe bool
@@ -182,10 +188,16 @@ func GinRecovery(stack bool) gin.HandlerFunc {
 
 				httpRequest, _ := httputil.DumpRequest(c.Request, false)
 				if brokenPipe {
-					logger.Error(c.Request.URL.Path,
-						zap.Any("error", err),
-						zap.String("request", string(httpRequest)),
-					)
+					if config.LogConfig.ConsoleOnly {
+						sugaredLogger.Errorf("%v\nerror:%v\nrequest:%v", c.Request.URL.Path,
+							err, string(httpRequest))
+					} else {
+						logger.Error(c.Request.URL.Path,
+							zap.Any("error", err),
+							zap.String("request", string(httpRequest)),
+						)
+					}
+
 					// If the connection is dead, we can't write a status to it.
 					c.Error(err.(error)) // nolint: errcheck
 					c.Abort()
@@ -193,18 +205,32 @@ func GinRecovery(stack bool) gin.HandlerFunc {
 				}
 
 				if stack {
-					logger.Error("[Recovery from panic]",
-						zap.Any("error", err),
-						zap.String("request", string(httpRequest)),
-						zap.String("stack", string(debug.Stack())),
-					)
+					if config.LogConfig.ConsoleOnly {
+						runtime.Caller(1)
+						sugaredLogger.Errorf("[Recovery from panic] err:%v \n",
+							err)
+					} else {
+						logger.Error("[Recovery from panic]",
+							zap.Any("error", err),
+							zap.String("request", string(httpRequest)),
+							zap.String("stack", string(debug.Stack())),
+						)
+					}
+
 				} else {
-					logger.Error("[Recovery from panic]",
-						zap.Any("error", err),
-						zap.String("request", string(httpRequest)),
-					)
+					if config.LogConfig.ConsoleOnly {
+						sugaredLogger.Errorf("[Recovery from panic] error:%v \nrequest:%v",
+							err, string(httpRequest))
+					} else {
+						logger.Error("[Recovery from panic]",
+							zap.Any("error", err),
+							zap.String("request", string(httpRequest)),
+						)
+					}
+
 				}
-				c.AbortWithStatus(http.StatusInternalServerError)
+				//c.AbortWithStatus(http.StatusInternalServerError)
+				c.Abort()
 			}
 		}()
 		c.Next()

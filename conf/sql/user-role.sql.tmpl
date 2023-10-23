@@ -1,0 +1,77 @@
+
+
+{{define "createUserRole"}}
+    insert into sys_user_role (user_id,role_id) values ({{val .UserId}},{{val .RoleId}})
+{{end}}
+
+{{define "deleteUserRole"}}
+    delete from sys_user_role where user_id={{val .UserId}} and role_id = {{val .RoleId}}
+{{end}}
+
+
+{{define "deleteUserRoleByRoleId"}}
+    delete from sys_user_role where role_id = {{val .}}
+{{end}}
+
+
+
+
+{{define "queryUserOfRole"}}
+    select t1.user_id,t1.user_name,t1.nick_name ,t1.enabled,t1.created_at
+    from sys_user t1
+    left join sys_user_role t2
+    on t2.user_id = t1.user_id
+    where t2.role_id = {{val .RoleId}}
+    {{if .UserName}} and ( user_name like '%{{rawVal .UserName}}%' or nick_name like '%{{rawVal .UserName}}%' ) {{end}}
+    {{if .Enabled}} and enabled = {{.Enabled}}{{end}}
+{{end}}
+
+
+{{define "queryUserIsNotBelongToRole"}}
+    select t1.user_id,t1.user_name,t1.nick_name ,t1.enabled,t1.created_at
+    from sys_user t1
+    where not exists(
+    select 1 from sys_user t2
+    left join sys_user_role t3
+    on t2.user_id = t3.user_id
+    where t3.role_id = {{val .RoleId}} and t1.user_id= t2.user_id
+    )
+    and t1.enabled = true
+    {{if .UserName}} and ( user_name like '%{{rawVal .UserName}}%' or nick_name like '%{{rawVal .UserName}}%' ) {{end}}
+    {{if .StartAt}} and created_at >= {{val .StartAt}}  {{end}}
+    {{if .EndAt}} and created_at <= {{val .EndAt}} {{end}}
+{{end}}
+
+
+
+{{define "deleteRolesOfUser"}}
+    delete from sys_user_role where user_id = {{val .}}
+{{end}}
+
+
+{{define "createRolesOfUser"}}
+    insert into sys_user_role (user_id,role_id) values {{range $i,$item := .RoleIds}}{{if ne $i 0}},{{end}}({{val $.UserId}},{{val $item}}) {{end}}
+{{end}}
+{{define "createUsersOfRole"}}
+    insert into sys_user_role (user_id,role_id) values {{range $i,$item := .UserIds}}{{if ne $i 0}},{{end}}({{val $item}},{{val $.RoleId}}) {{end}}
+{{end}}
+
+
+{{define "findRolesByUserId"}}
+    select t1.role_id,t1.role_name,t1.auth_code,t1.enabled,t1.remark,t1.created_at,t1.updated_at
+    from sys_role t1
+    left join sys_user_role t2
+    on t2.role_id = t1.role_id
+    where t2.user_id = {{val .}}
+{{end}}
+
+{{define "queryRolesOfUser"}}
+    select t1.role_id,t1.role_name,t1.auth_code,t1.enabled,t1.remark,t1.created_at,t1.updated_at
+    from sys_role t1
+    left join sys_user_role t2
+    on t2.role_id = t1.role_id
+    where 1=1
+    {{if .UserId}} and t2.user_id = {{val .UserId}}{{end}}
+    {{if .Enabled}} and t1.Enabled = {{val .Enabled}}{{end}}
+
+{{end}}
