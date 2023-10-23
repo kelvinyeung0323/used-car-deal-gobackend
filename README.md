@@ -18,6 +18,7 @@
 ## 项目架构
 后端程序包括后台管理和交易，因为多年的经验，一般小公司小项目并没有那个体量必须分布式，所以项目以monolith的模式架构，构建一个维护简单的系统；最终程序只分成两部份：系统程序（前端打包进go程序中）+mysql数据库
 
+![image](https://github.com/kelvinyeung0323/used-car-deal-gobackend/blob/master/doc/images/architecture.png)
 
 
 ## 数据库设计
