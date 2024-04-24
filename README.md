@@ -82,20 +82,13 @@ resources目录存放一些资源文件，使用embbed,打包时嵌入到go程�
 ### 全局事务处理
 go不像java一样可以使用注解来配置事务处理;     
 网上找的解决方案，个人觉得都不太好,过于复杂；在这个项里我把事务处理的逻辑提到中间件里进行处理；  
-1.每一个请求到来，在service层开层事务，然后把数据库连接放在gin.Context里；    
-2.repo层先从gin.Context中把连接合出来再进行操作；    
+1.在service层按需开启事务，然后把数据库连接放在gin.Context里；    
+2.repo层先从gin.Context中把连接拿出来再进行操作；    
 3.如果数据操作失败或业务逻辑错误，则抛出特定类型的panic;   
 4.在中间件进行recover,然后对事务进行rollback;    
 5.如果没有panic则commit;    
 
 
-## Websocket
-项目使用websocket跟前端进行实时交互
-
-
-## 监控线程
-监控线程负责定时轮询监控设备，把获取到的数据通过websocket发送到前端并保存相关日志；
-通过socket连接设备，每种设备都有各自的交互协议；
 
 
 
